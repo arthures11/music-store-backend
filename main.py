@@ -53,16 +53,15 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 @app.get("/api/tracks/", response_model=List[schemas.Track])
 async def read_tracks(name: Optional[str] = None, db: AsyncSession = Depends(get_db), current_user: str = Depends(get_current_user)):
     query = select(
-        models.Track.Name,
-        models.Album.Title,
-        models.Artist.Name,
-        models.Track.Milliseconds,
-        models.Genre.Name
-    ).select_from(models.Track).join(models.Album, models.Track.AlbumId == models.Album.AlbumId).join(models.Artist, models.Album.ArtistId == models.Artist.ArtistId).join(models.Genre, models.Track.GenreId == models.Genre.GenreId)
-
+        models.Track.name,
+        models.Album.title,
+        models.Artist.name,
+        models.Track.milliseconds,
+        models.Genre.name,
+    ).select_from(models.Track).join(models.Album, models.Track.album_id == models.Album.album_id).join(models.Artist, models.Album.artist_id == models.Artist.artist_id).join(models.Genre, models.Track.genre_id == models.Genre.genre_id)
 
     if name:
-        query = query.where(models.Track.Name.ilike(f"%{name}%"))
+        query = query.where(models.Track.name.ilike(f"%{name}%"))
 
     result = await db.execute(query)
     tracks = result.all()
@@ -72,11 +71,11 @@ async def read_tracks(name: Optional[str] = None, db: AsyncSession = Depends(get
 
     return [
         schemas.Track(
-            name=track.Name,
-            album=track.Title,
-            artist=track.Name_1,
-            duration=str(track.Milliseconds // 1000),
-            genre=track.Name_2
+            name=track.name,
+            album=track.title,
+            artist=track.name_1,
+            duration=str(track.milliseconds // 1000),
+            genre=track.name_2
         )
         for track in tracks
     ]
