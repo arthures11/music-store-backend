@@ -1,4 +1,5 @@
 from datetime import timedelta
+from venv import logger
 
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -53,11 +54,11 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 @app.get("/api/tracks/", response_model=List[schemas.Track])
 async def read_tracks(name: Optional[str] = None, db: AsyncSession = Depends(get_db), current_user: str = Depends(get_current_user)):
     query = select(
-        models.Track.name,
-        models.Album.title,
-        models.Artist.name,
-        models.Track.milliseconds,
-        models.Genre.name,
+        models.Track.name.label("track_name"),
+        models.Album.title.label("album_title"),
+        models.Artist.name.label("artist_name"),
+        models.Track.milliseconds.label("ms"),
+        models.Genre.name.label("genre_name"),
     ).select_from(models.Track).join(models.Album, models.Track.album_id == models.Album.album_id).join(models.Artist, models.Album.artist_id == models.Artist.artist_id).join(models.Genre, models.Track.genre_id == models.Genre.genre_id)
 
     if name:
@@ -67,15 +68,15 @@ async def read_tracks(name: Optional[str] = None, db: AsyncSession = Depends(get
     tracks = result.all()
 
 
-    print(current_user)
+    logger.info(current_user)
 
     return [
         schemas.Track(
-            name=track.name,
-            album=track.title,
-            artist=track.name_1,
-            duration=str(track.milliseconds // 1000),
-            genre=track.name_2
+            name=track.track_name,
+            album=track.album_title,
+            artist=track.artist_name,
+            duration=str(track.ms // 1000),
+            genre=track.genre_name
         )
         for track in tracks
     ]
