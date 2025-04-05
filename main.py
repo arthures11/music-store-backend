@@ -1,6 +1,7 @@
 from datetime import timedelta
 from venv import logger
-
+from strawberry.fastapi import GraphQLRouter
+from graphql_schema import schema
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -51,7 +52,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@app.get("/api/tracks/", response_model=List[schemas.Track])
+@app.get("/api/tracks", response_model=List[schemas.Track])
 async def read_tracks(name: Optional[str] = None, db: AsyncSession = Depends(get_db), current_user: str = Depends(get_current_user)):
     query = select(
         models.Track.name.label("track_name"),
@@ -80,3 +81,18 @@ async def read_tracks(name: Optional[str] = None, db: AsyncSession = Depends(get
         )
         for track in tracks
     ]
+
+
+graphql_app = GraphQLRouter(schema)
+
+app.include_router(
+    graphql_app,
+    prefix="/graphql",
+    dependencies=[Depends(get_current_user)]
+)
+
+
+@app.post("/graphql", include_in_schema=False)
+async def graphiql_redirect():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/graphql")
