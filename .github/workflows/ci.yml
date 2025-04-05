@@ -1,4 +1,4 @@
-name: Python CI with Docker
+name: Backend CI (FastAPI)
 
 on:
   push:
@@ -6,11 +6,13 @@ on:
       - '**'
 
 jobs:
-  build:
+  run-test:
+    name: Test Backend
     runs-on: ubuntu-latest
 
+
     steps:
-      - name: Checkout code
+      - name: Checkout Backend Code
         uses: actions/checkout@v3
 
       - name: Set up Python
@@ -23,8 +25,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+
       - name: Run tests
         env:
           DATABASE_URL: sqlite+aiosqlite:///Chinook_Sqlite.sqlite
+          SECRET_KEY: '091283nbjsadabsjhd81o23nasdkjnasdasdbv'
         run: |
           pytest
